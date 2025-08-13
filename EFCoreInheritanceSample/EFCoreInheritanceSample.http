@@ -1,0 +1,9 @@
+@EFCoreInheritanceSample_HostAddress = http://localhost:5038
+
+GET {{EFCoreInheritanceSample_HostAddress}}/cats/
+Accept: application/json
+
+###
+
+GET {{EFCoreInheritanceSample_HostAddress}}/dogs/
+Accept: application/json
