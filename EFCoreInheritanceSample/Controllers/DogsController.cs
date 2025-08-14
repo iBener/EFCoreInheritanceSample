@@ -14,6 +14,8 @@ public class DogsController(AnimalDbContext context) : ControllerBase
     [HttpGet]
     public IEnumerable<DogModel> Get()
     {
+
+
         var dtos = context.Dogs
                 .AsSplitQuery()
                 .Include(x => x.Parent)

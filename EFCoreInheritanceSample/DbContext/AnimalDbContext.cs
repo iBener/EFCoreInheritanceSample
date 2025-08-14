@@ -1,5 +1,6 @@
 ﻿using EFCoreInheritanceSample.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace EFCoreInheritanceSample.DbContext;
 
@@ -9,33 +10,52 @@ public class AnimalDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Cat> Cats { get; set; }
     public DbSet<Dog> Dogs { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(modelBuilder);
 
-        // Animals
-        builder.Entity<Animal>()
-            .ToTable("Animals");
+        // TPT (Table Per Type) konfigürasyonu
+        //modelBuilder.Entity<Animal>()
+        //    .UseTptMappingStrategy();
 
-        builder.Entity<Animal>()
-            .HasOne(x => x.Parent)
-            .WithMany(x => x.Children)
-            .HasForeignKey(t => t.ParentId)
+        // Alternatif olarak aşağıdaki şekilde de yapabilirsiniz:
+        // modelBuilder.Entity<Cat>().ToTable("Cats");
+        // modelBuilder.Entity<Dog>().ToTable("Dogs");
+
+        // Self-referencing relationship konfigürasyonu
+        modelBuilder.Entity<Animal>()
+            .HasOne(a => a.Parent)
+            .WithMany(a => a.Children)
+            .HasForeignKey(a => a.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Cats
-        builder.Entity<Cat>()
-            .ToTable("Cats");
+        // Animal base entity konfigürasyonu
+        modelBuilder.Entity<Animal>()
+            .HasKey(a => a.Id);
 
-        builder.Entity<Cat>()
-            .HasBaseType<Animal>();
+        modelBuilder.Entity<Animal>()
+            .Property(a => a.Name)
+            .IsRequired()
+            .HasMaxLength(100);
 
-        // Dogs
-        builder.Entity<Dog>()
-            .ToTable("Dogs");
+        // Cat specific konfigürasyon
+        modelBuilder.Entity<Cat>()
+            .Property(c => c.MiceCaughtCount)
+            .IsRequired();
 
-        builder.Entity<Dog>()
-            .HasBaseType<Animal>();
+        // Dog specific konfigürasyon
+        modelBuilder.Entity<Dog>()
+            .Property(d => d.BonesBuriedCount)
+            .IsRequired();
+
+        // Index'ler
+        modelBuilder.Entity<Animal>()
+            .HasIndex(a => a.ParentId)
+            .HasDatabaseName("IX_Animals_ParentId");
+
+        modelBuilder.Entity<Animal>()
+            .HasIndex(a => a.Name)
+            .HasDatabaseName("IX_Animals_Name");
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
@@ -43,3 +63,5 @@ public class AnimalDbContext : Microsoft.EntityFrameworkCore.DbContext
         builder.UseNpgsql("Server=localhost;Port=5432;Database=AnimalsDB;User Id=postgres;Password=1453;");
     }
 }
+
+

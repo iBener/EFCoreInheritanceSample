@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EFCoreInheritanceSample.Migrations
 {
     [DbContext(typeof(AnimalDbContext))]
-    [Migration("20250813144208_Init")]
+    [Migration("20250814090051_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -32,20 +32,32 @@ namespace EFCoreInheritanceSample.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("Name")
+                        .HasDatabaseName("IX_Animals_Name");
 
-                    b.ToTable("Animals", (string)null);
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("IX_Animals_ParentId");
 
-                    b.UseTptMappingStrategy();
+                    b.ToTable("Animals");
+
+                    b.HasDiscriminator().HasValue("Animal");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("EFCoreInheritanceSample.Entities.Cat", b =>
@@ -55,7 +67,7 @@ namespace EFCoreInheritanceSample.Migrations
                     b.Property<int>("MiceCaughtCount")
                         .HasColumnType("integer");
 
-                    b.ToTable("Cats", (string)null);
+                    b.HasDiscriminator().HasValue("Cat");
                 });
 
             modelBuilder.Entity("EFCoreInheritanceSample.Entities.Dog", b =>
@@ -65,7 +77,7 @@ namespace EFCoreInheritanceSample.Migrations
                     b.Property<int>("BonesBuriedCount")
                         .HasColumnType("integer");
 
-                    b.ToTable("Dogs", (string)null);
+                    b.HasDiscriminator().HasValue("Dog");
                 });
 
             modelBuilder.Entity("EFCoreInheritanceSample.Entities.Animal", b =>
@@ -76,24 +88,6 @@ namespace EFCoreInheritanceSample.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Parent");
-                });
-
-            modelBuilder.Entity("EFCoreInheritanceSample.Entities.Cat", b =>
-                {
-                    b.HasOne("EFCoreInheritanceSample.Entities.Animal", null)
-                        .WithOne()
-                        .HasForeignKey("EFCoreInheritanceSample.Entities.Cat", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("EFCoreInheritanceSample.Entities.Dog", b =>
-                {
-                    b.HasOne("EFCoreInheritanceSample.Entities.Animal", null)
-                        .WithOne()
-                        .HasForeignKey("EFCoreInheritanceSample.Entities.Dog", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("EFCoreInheritanceSample.Entities.Animal", b =>
